@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Setup // SMART PARKING</title>
+<style>
+  :root { --bg: #0a0e14; --panel: #10151d; --panel-line: #1c2530; --cyan: #00e5ff; --text: #c9d6e3; --muted: #5b6b7c; }
+  body { background: var(--bg); color: var(--text); font-family: monospace; display: flex; justify-content: center; padding: 20px; margin: 0;}
+  .setup-card { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 10px; padding: 30px; width: 100%; max-width: 450px; }
+  h1 { color: var(--cyan); text-align: center; font-family: sans-serif; }
+  .form-group { margin-bottom: 15px; }
+  label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+  input { width: 100%; padding: 10px; background: #0d121a; border: 1px solid var(--panel-line); color: var(--cyan); border-radius: 5px; box-sizing: border-box;}
+  .btn { width: 100%; padding: 14px; background: rgba(0, 229, 255, 0.1); border: 1px solid var(--cyan); color: var(--cyan); cursor: pointer; border-radius: 5px; font-weight: bold; margin-top: 10px;}
+  .btn:hover { background: var(--cyan); color: #000; }
+</style>
+</head>
+<body>
+
+<div class="setup-card">
+  <h1>SYSTEM CONFIG</h1>
+  <form id="setupForm">
+    <div class="form-group">
+      <label>WiFi SSID</label>
+      <input type="text" id="ssid" name="ssid" required>
+    </div>
+    <div class="form-group">
+      <label>WiFi Password</label>
+      <input type="password" id="pass" name="pass">
+    </div>
+    <div class="form-group">
+      <label>LINE Channel Token</label>
+      <input type="text" id="lineToken" name="lineToken" placeholder="วาง Token ที่นี่...">
+    </div>
+    <div class="form-group">
+      <label>LINE Target ID (Group/User)</label>
+      <input type="text" id="lineTarget" name="lineTarget">
+    </div>
+    <div class="form-group">
+      <label>Google Apps Script Webhook URL</label>
+      <input type="text" id="webhookUrl" name="webhookUrl">
+    </div>
+    <button type="submit" id="submitBtn" class="btn">SAVE & REBOOT</button>
+  </form>
+</div>
+
+<script>
+  document.getElementById('setupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    document.getElementById('submitBtn').textContent = 'SAVING...';
+    
+    const formData = new URLSearchParams(new FormData(e.target));
+    try {
+      await fetch('/api/settings/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData
+      });
+      alert('บันทึกสำเร็จ อุปกรณ์กำลังรีบูท...');
+    } catch (e) {
+      alert("เกิดข้อผิดพลาด");
+    }
+  });
+</script>
+</body>
+</html>
