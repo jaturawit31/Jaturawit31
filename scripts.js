@@ -1,5 +1,5 @@
 // !!! เปลี่ยน URL ตรงนี้เป็น Web App URL ที่คุณได้จาก Google Apps Script !!!
-const GAS_URL = "https://script.google.com/macros/s/ใส่_ID_WEB_APP_ของคุณ/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxh3yY3N64ESLAN28xIiTg7Kjr-ko-r6h0loLdqWz_f_QxJ8LAgawBys4wqNaKk3KQ/exec";
 const REFRESH_MS = 3000;
 
 function tickClock() {
