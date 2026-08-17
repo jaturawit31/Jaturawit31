@@ -3,296 +3,100 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CLOUD SMART PARKING // Live Monitor</title>
+<title>SMART PARKING // 2 Bays</title>
+<link rel="stylesheet" href="style.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<style>
-  /* ==========================================================================
-     CSS เหมือน Local ทุกประการ
-     ========================================================================== */
-  :root { --bg: #0a0e14; --panel: #10151d; --panel-line: #1c2530; --cyan: #00e5ff; --amber: #ffb400; --red: #ff3b5c; --green: #35e28c; --text: #c9d6e3; --muted: #5b6b7c; }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Share Tech Mono', monospace; min-height: 100vh; position: relative; overflow-x: hidden; }
-  .grid-overlay { position: fixed; inset: 0; background-image: linear-gradient(rgba(0, 229, 255, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 229, 255, 0.035) 1px, transparent 1px); background-size: 34px 34px; pointer-events: none; z-index: 0; }
-  .topbar { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: 20px 32px; border-bottom: 1px solid var(--panel-line); }
-  .brand { display: flex; align-items: center; gap: 14px; }
-  .brand-mark { font-size: 28px; color: var(--cyan); text-shadow: 0 0 12px rgba(0,229,255,.6); }
-  .brand-text h1 { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 20px; letter-spacing: 3px; color: #eef4f8; }
-  .brand-sub { font-size: 11px; letter-spacing: 2px; color: var(--muted); }
-  .topbar-status { display: flex; align-items: center; gap: 24px; }
-  .clock { font-family: 'Orbitron', sans-serif; font-size: 20px; color: var(--cyan); letter-spacing: 1px; }
-  .link-state { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--cyan); } /* เปลียนจาก muted เป็น cyan สำหรับ cloud */
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-  .dot.online { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
-  .dot.offline { background: var(--red); box-shadow: 0 0 8px var(--red); }
-  .layout { position: relative; z-index: 1; display: grid; grid-template-columns: 1.6fr 1fr; grid-template-rows: auto auto; gap: 18px; padding: 24px 32px; }
-  .panel { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 10px; padding: 18px 20px 22px; position: relative; }
-  .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-  .eyebrow { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
-  .available-pill { font-family: 'Orbitron', sans-serif; font-size: 13px; color: var(--green); border: 1px solid var(--green); border-radius: 20px; padding: 4px 14px; transition: all .3s ease; }
-  .available-pill.full { color: var(--red); border-color: var(--red); }
-  .schematic-panel { grid-column: 1; grid-row: 1 / span 2; }
-  .schematic { width: 100%; height: auto; }
-  .road { fill: #151c26; }
-  .road-dash { stroke: var(--panel-line); stroke-width: 2; stroke-dasharray: 10 8; }
-  .bay-outline { fill: none; stroke: var(--panel-line); stroke-width: 2; }
-  .bay-label { fill: var(--muted); font-family: 'Orbitron', sans-serif; font-size: 13px; letter-spacing: 1px; }
-  .bay-status { fill: var(--text); font-family: 'Orbitron', sans-serif; font-size: 14px; letter-spacing: 1px; }
-  .sensor-dot { fill: var(--cyan); }
-  .sensor-beam { stroke: var(--cyan); stroke-width: 2; stroke-dasharray: 4 4; opacity: .55; transition: stroke .3s ease, opacity .3s ease; }
-  .sensor-beam.occupied { stroke: var(--amber); opacity: .9; }
-  .car { transition: opacity .4s ease; }
-  .car-body { fill: var(--amber); }
-  .car-glass { fill: #0a0e14; opacity: .5; }
-  .full-banner { transition: opacity .3s ease; }
-  .full-banner-bg { fill: rgba(255, 59, 92, 0.12); stroke: var(--red); stroke-width: 1.5; }
-  .full-banner-text { fill: var(--red); font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 700; }
-  .readout-panel { grid-column: 2; grid-row: 1; }
-  .readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 500px) { .readouts { grid-template-columns: 1fr; } }
-  .readout-card { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; background: #0d121a; border: 1px solid var(--panel-line); border-radius: 8px; padding: 14px 16px; transition: border-color .3s ease; position: relative; }
-  .readout-card.occupied { border-color: var(--amber); }
-  .readout-label { font-size: 12px; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; }
-  .readout-value { font-family: 'Orbitron', sans-serif; font-size: 26px; color: var(--cyan); }
-  .readout-value small { font-size: 12px; color: var(--muted); margin-left: 4px; }
-  .readout-tag { position: absolute; top: 14px; right: 16px; font-size: 11px; padding: 3px 10px; border-radius: 12px; background: rgba(53, 226, 140, .12); color: var(--green); letter-spacing: 1px; }
-  .readout-tag.occupied { background: rgba(255, 180, 0, .12); color: var(--amber); }
-  .readout-tag.offline { background: rgba(255, 59, 92, .12); color: var(--red); }
-  .chart-panel { grid-column: 2; grid-row: 2; }
-  .chart-wrap { height: 200px; position: relative; }
-  .history-panel { grid-column: 1 / span 2; }
-  .table-wrap { max-height: 220px; overflow-y: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead th { text-align: left; color: var(--muted); font-weight: 400; letter-spacing: 1px; font-size: 11px; padding: 8px 10px; border-bottom: 1px solid var(--panel-line); position: sticky; top: 0; background: var(--panel); }
-  tbody td { padding: 8px 10px; border-bottom: 1px solid #171e28; color: var(--text); }
-  tbody tr:hover { background: rgba(0, 229, 255, .04); }
-  .empty-row td { color: var(--muted); text-align: center; padding: 20px; }
-  .footer { position: relative; z-index: 1; text-align: center; font-size: 11px; color: var(--muted); padding: 16px; letter-spacing: 1px; }
-  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .schematic-panel, .readout-panel, .chart-panel, .history-panel { grid-column: 1; grid-row: auto; } .topbar { flex-direction: column; align-items: flex-start; gap: 10px; } }
-</style>
 </head>
 <body>
-
   <div class="grid-overlay"></div>
 
   <header class="topbar">
     <div class="brand">
       <span class="brand-mark">◈</span>
       <div class="brand-text">
-        <h1>CLOUD PARKING</h1>
-        <span class="brand-sub">GITHUB PAGES · SYNCED VIA GOOGLE SHEETS</span>
+        <h1>SMART PARKING</h1>
+        <span class="brand-sub">ESP32 · 2 BAYS MONITOR</span>
       </div>
     </div>
     <div class="topbar-status">
+      <a href="/setup" class="setup-link" id="setupLink">⚙️ SETTINGS</a> <!-- ปุ่มไปหน้าตั้งค่า (จะทำงานเฉพาะบน Local) -->
       <div class="clock" id="clock">--:--:--</div>
-      <div class="link-state" id="linkState">
+      <div class="link-state">
         <span class="dot" id="linkDot"></span>
-        <span id="linkLabel">กำลังเชื่อมต่อ Cloud...</span>
+        <span id="linkLabel">กำลังเชื่อมต่อ...</span>
       </div>
     </div>
   </header>
 
   <main class="layout">
+    <!-- ผังลานจอด (ปรับเหลือ 2 ช่อง) -->
     <section class="panel schematic-panel">
       <div class="panel-head">
-        <span class="eyebrow">01 — ผังลานจอด (4 ช่อง)</span>
+        <span class="eyebrow">01 — ผังลานจอด (2 ช่อง)</span>
         <span class="available-pill" id="availablePill">-- / -- ว่าง</span>
       </div>
-      <svg viewBox="0 0 1080 320" class="schematic" id="schematicSvg">
-        <rect x="0" y="140" width="1080" height="40" class="road"/>
-        <line x1="0" y1="160" x2="1080" y2="160" class="road-dash"/>
+      <!-- viewBox ลดขนาดลงให้พอดีกับ 2 ช่อง -->
+      <svg viewBox="0 0 540 320" class="schematic">
+        <rect x="0" y="140" width="540" height="40" class="road"/>
+        <line x1="0" y1="160" x2="540" y2="160" class="road-dash"/>
+
+        <!-- ช่อง 1 -->
         <g id="bay1">
-          <rect x="60" y="30" width="150" height="100" rx="6" class="bay-outline"/>
-          <text x="135" y="20" text-anchor="middle" class="bay-label">ช่อง 1</text>
-          <circle cx="135" cy="40" r="4" class="sensor-dot"/>
-          <line x1="135" y1="44" x2="135" y2="120" class="sensor-beam" id="beam1"/>
+          <rect x="70" y="30" width="150" height="100" rx="6" class="bay-outline"/>
+          <text x="145" y="20" text-anchor="middle" class="bay-label">ช่อง 1</text>
+          <circle cx="145" cy="40" r="4" class="sensor-dot"/>
+          <line x1="145" y1="44" x2="145" y2="120" class="sensor-beam" id="beam1"/>
           <g id="car1" class="car" opacity="0">
-            <rect x="85" y="55" width="100" height="55" rx="10" class="car-body"/>
-            <rect x="100" y="62" width="70" height="18" rx="4" class="car-glass"/>
+            <rect x="95" y="55" width="100" height="55" rx="10" class="car-body"/>
+            <rect x="110" y="62" width="70" height="18" rx="4" class="car-glass"/>
           </g>
-          <text x="135" y="150" text-anchor="middle" class="bay-status" id="status1">--</text>
+          <text x="145" y="150" text-anchor="middle" class="bay-status" id="status1">--</text>
         </g>
+
+        <!-- ช่อง 2 -->
         <g id="bay2">
-          <rect x="310" y="30" width="150" height="100" rx="6" class="bay-outline"/>
-          <text x="385" y="20" text-anchor="middle" class="bay-label">ช่อง 2</text>
-          <circle cx="385" cy="40" r="4" class="sensor-dot"/>
-          <line x1="385" y1="44" x2="385" y2="120" class="sensor-beam" id="beam2"/>
+          <rect x="320" y="30" width="150" height="100" rx="6" class="bay-outline"/>
+          <text x="395" y="20" text-anchor="middle" class="bay-label">ช่อง 2</text>
+          <circle cx="395" cy="40" r="4" class="sensor-dot"/>
+          <line x1="395" y1="44" x2="395" y2="120" class="sensor-beam" id="beam2"/>
           <g id="car2" class="car" opacity="0">
-            <rect x="335" y="55" width="100" height="55" rx="10" class="car-body"/>
-            <rect x="350" y="62" width="70" height="18" rx="4" class="car-glass"/>
+            <rect x="345" y="55" width="100" height="55" rx="10" class="car-body"/>
+            <rect x="360" y="62" width="70" height="18" rx="4" class="car-glass"/>
           </g>
-          <text x="385" y="150" text-anchor="middle" class="bay-status" id="status2">--</text>
+          <text x="395" y="150" text-anchor="middle" class="bay-status" id="status2">--</text>
         </g>
-        <g id="bay3">
-          <rect x="560" y="30" width="150" height="100" rx="6" class="bay-outline"/>
-          <text x="635" y="20" text-anchor="middle" class="bay-label">ช่อง 3</text>
-          <circle cx="635" cy="40" r="4" class="sensor-dot"/>
-          <line x1="635" y1="44" x2="635" y2="120" class="sensor-beam" id="beam3"/>
-          <g id="car3" class="car" opacity="0">
-            <rect x="585" y="55" width="100" height="55" rx="10" class="car-body"/>
-            <rect x="600" y="62" width="70" height="18" rx="4" class="car-glass"/>
-          </g>
-          <text x="635" y="150" text-anchor="middle" class="bay-status" id="status3">--</text>
-        </g>
-        <g id="bay4">
-          <rect x="810" y="30" width="150" height="100" rx="6" class="bay-outline"/>
-          <text x="885" y="20" text-anchor="middle" class="bay-label">ช่อง 4</text>
-          <circle cx="885" cy="40" r="4" class="sensor-dot"/>
-          <line x1="885" y1="44" x2="885" y2="120" class="sensor-beam" id="beam4"/>
-          <g id="car4" class="car" opacity="0">
-            <rect x="835" y="55" width="100" height="55" rx="10" class="car-body"/>
-            <rect x="850" y="62" width="70" height="18" rx="4" class="car-glass"/>
-          </g>
-          <text x="885" y="150" text-anchor="middle" class="bay-status" id="status4">--</text>
-        </g>
+
+        <!-- ป้าย FULL overlay (จัดกึ่งกลาง 540) -->
         <g id="fullBanner" class="full-banner" opacity="0">
-          <rect x="390" y="200" width="300" height="60" rx="8" class="full-banner-bg"/>
-          <text x="540" y="240" text-anchor="middle" class="full-banner-text">🚫 ลานจอดเต็ม</text>
+          <rect x="120" y="200" width="300" height="60" rx="8" class="full-banner-bg"/>
+          <text x="270" y="240" text-anchor="middle" class="full-banner-text">🚫 ลานจอดเต็ม</text>
         </g>
       </svg>
     </section>
 
+    <!-- ข้อมูลระยะเซ็นเซอร์ -->
     <section class="panel readout-panel">
       <div class="panel-head"><span class="eyebrow">02 — ค่าระยะเซ็นเซอร์</span></div>
       <div class="readouts">
-        <div class="readout-card" id="card1"><span class="readout-label">ช่อง 1</span><span class="readout-value"><span id="dist1">--</span><small>cm</small></span><span class="readout-tag" id="tag1">รอข้อมูล</span></div>
-        <div class="readout-card" id="card2"><span class="readout-label">ช่อง 2</span><span class="readout-value"><span id="dist2">--</span><small>cm</small></span><span class="readout-tag" id="tag2">รอข้อมูล</span></div>
-        <div class="readout-card" id="card3"><span class="readout-label">ช่อง 3</span><span class="readout-value"><span id="dist3">--</span><small>cm</small></span><span class="readout-tag" id="tag3">รอข้อมูล</span></div>
-        <div class="readout-card" id="card4"><span class="readout-label">ช่อง 4</span><span class="readout-value"><span id="dist4">--</span><small>cm</small></span><span class="readout-tag" id="tag4">รอข้อมูล</span></div>
-      </div>
-    </section>
-
-    <section class="panel chart-panel">
-      <div class="panel-head"><span class="eyebrow">03 — สัดส่วนช่องจอด</span></div>
-      <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
-    </section>
-
-    <section class="panel history-panel">
-      <div class="panel-head"><span class="eyebrow">04 — ประวัติล่าสุดใน Cloud</span></div>
-      <div class="table-wrap">
-        <table id="historyTable">
-          <thead><tr><th>เวลา</th><th>ช่อง</th><th>สถานะ</th></tr></thead>
-          <tbody id="historyBody"><tr class="empty-row"><td colspan="3">กำลังโหลด...</td></tr></tbody>
-        </table>
+        <div class="readout-card" id="card1">
+          <span class="readout-label">ช่อง 1</span>
+          <span class="readout-value"><span id="dist1">--</span><small>cm</small></span>
+          <span class="readout-tag" id="tag1">รอข้อมูล</span>
+        </div>
+        <div class="readout-card" id="card2">
+          <span class="readout-label">ช่อง 2</span>
+          <span class="readout-value"><span id="dist2">--</span><small>cm</small></span>
+          <span class="readout-tag" id="tag2">รอข้อมูล</span>
+        </div>
       </div>
     </section>
   </main>
 
   <footer class="footer">
-    อัปเดตจาก Cloud ล่าสุด: <span id="lastUpdate">--</span> · รีเฟรชอัตโนมัติทุก 2 วินาที
+    อัปเดตล่าสุด: <span id="lastUpdate">--</span>
   </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-  <script>
-    // URL ของ Google Apps Script ของคุณ
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyjub3wvft5l_jxYjnEJgJK-6yaswPn8OCcTVA0R5wvQr8_MYgsHEsRNH1RJ4YR9Dts/exec";
-    const TOTAL_SLOTS = 4;
-    
-    let pieChart = null;
-    let previousOccupied = [null, null, null, null];
-    let historyLog = [];
-
-    setInterval(() => {
-      document.getElementById('clock').textContent = new Date().toLocaleTimeString('th-TH', { hour12: false });
-    }, 1000);
-
-    function initChart() {
-      const ctx = document.getElementById('pieChart').getContext('2d');
-      pieChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: { labels: ['ว่าง', 'มีรถ'], datasets: [{ data: [4, 0], backgroundColor: ['#35e28c', '#ffb400'], borderColor: '#10151d', borderWidth: 3 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#c9d6e3', font: { family: 'Share Tech Mono', size: 12 } } } } }
-      });
-    }
-
-    // ฟังก์ชันนี้ถูกออกแบบให้ UI ของ Cloud นำกลับมาใช้ตรรกะเดิมของฝั่ง Local ได้
-    function renderDashboard(data) {
-      // แปลงข้อมูลจาก Google Sheets ให้อยู่ในฟอร์แมตเดียวกับ Local (slots array)
-      const slots = [];
-      for(let i=1; i<=4; i++) {
-        const isOccupied = data[`Status${i}`] === "มีรถ";
-        slots.push({
-          distance: parseFloat(data[`Distance${i}`]) || -1,
-          occupied: isOccupied,
-          online: data[`Status${i}`] !== "" // ตีความว่าถ้ามีข้อมูลใน Sheet คือออนไลน์
-        });
-      }
-
-      const available = data.Available || 0;
-      const total = data.Total || 4;
-
-      // --- อัปเดตผังลานจอด ---
-      slots.forEach((slot, i) => {
-        const n = i + 1;
-        const car = document.getElementById('car' + n);
-        const beam = document.getElementById('beam' + n);
-        const statusText = document.getElementById('status' + n);
-
-        car.setAttribute('opacity', slot.occupied ? '1' : '0');
-        beam.classList.toggle('occupied', slot.occupied);
-        statusText.textContent = slot.occupied ? 'มีรถ' : 'ว่าง';
-        statusText.style.fill = slot.occupied ? '#ffb400' : '#35e28c';
-      });
-      document.getElementById('fullBanner').setAttribute('opacity', (available == 0) ? '1' : '0');
-
-      // --- อัปเดต Readouts ---
-      slots.forEach((slot, i) => {
-        const n = i + 1;
-        document.getElementById('dist' + n).textContent = slot.distance >= 0 ? slot.distance.toFixed(1) : '--';
-        const card = document.getElementById('card' + n);
-        const tag = document.getElementById('tag' + n);
-        
-        card.classList.toggle('occupied', slot.occupied);
-        tag.textContent = slot.occupied ? 'มีรถ' : 'ว่าง';
-        tag.className = 'readout-tag ' + (slot.occupied ? 'occupied' : '');
-      });
-
-      // --- อัปเดต Chart & Status ---
-      pieChart.data.datasets[0].data = [available, total - available];
-      pieChart.update('none');
-
-      const pill = document.getElementById('availablePill');
-      pill.textContent = `${available} / ${total} ว่าง`;
-      pill.classList.toggle('full', available == 0);
-      document.getElementById('lastUpdate').textContent = data.Timestamp || '--';
-      
-      document.getElementById('linkDot').className = 'dot online';
-      document.getElementById('linkLabel').textContent = 'เชื่อมต่อ Google Sheets แล้ว';
-
-      // --- อัปเดตประวัติ ---
-      slots.forEach((slot, i) => {
-        const n = i + 1;
-        if (previousOccupied[i] !== null && previousOccupied[i] !== slot.occupied) {
-          historyLog.unshift({ time: new Date().toLocaleTimeString('th-TH'), slot: 'ช่อง ' + n, status: slot.occupied ? 'ว่าง → มีรถ' : 'มีรถ → ว่าง' });
-          historyLog = historyLog.slice(0, 30); 
-        }
-        previousOccupied[i] = slot.occupied;
-      });
-
-      const body = document.getElementById('historyBody');
-      if (historyLog.length === 0) {
-        body.innerHTML = '<tr class="empty-row"><td colspan="3">ระบบรอบันทึกการเปลี่ยนแปลงถัดไป...</td></tr>';
-      } else {
-        body.innerHTML = historyLog.map(h => `<tr><td>${h.time}</td><td>${h.slot}</td><td style="color:${h.status.includes('มีรถ') ? '#ffb400' : '#35e28c'}">${h.status}</td></tr>`).join('');
-      }
-    }
-
-    async function fetchCloudStatus() {
-      try {
-        const res = await fetch(GAS_URL + "?limit=1");
-        const json = await res.json();
-        if (json.rows && json.rows.length > 0) {
-          renderDashboard(json.rows[0]);
-        }
-      } catch (err) {
-        document.getElementById('linkDot').className = 'dot offline';
-        document.getElementById('linkLabel').textContent = 'ขาดการเชื่อมต่อ Cloud';
-      }
-    }
-
-    initChart();
-    fetchCloudStatus();
-    setInterval(fetchCloudStatus, 2000); // ดึงข้อมูลทุก 2 วินาที
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
